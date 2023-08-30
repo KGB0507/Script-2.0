@@ -1,11 +1,10 @@
 ﻿//Copyright (c) Kirill Belozerov, 2023
 
-//#define DEBUG 
+#define DEBUG 
 
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 
 namespace Script
@@ -28,7 +27,7 @@ namespace Script
             string path2 = args[1];
 
             ReadCoordinateFile(path1);
-            SetCrystParameters(path2);
+            ReadCrystParameters(path2);
 
             for (int k = 0; k < NUMOFCOLS; k++)
             {
@@ -126,9 +125,16 @@ namespace Script
             }*/
         }
 
+        public class BorderCryst
+        {
+            int topCryst { get; set; }
+            int downCryst { get; set; }
+        }
 
         public static List<CrystCoord> crystCoords = new List<CrystCoord>();
-        //
+
+        public static List<BorderCryst> borderCryst = new List<BorderCryst>();
+
         enum Direction
         {
             TOP = 1,
@@ -221,7 +227,7 @@ namespace Script
             }
         }
 
-        static void SetCrystParameters(string path)
+        static void ReadCrystParameters(string path)
         {
             List<string> lines = new List<string>();
             int k = 0;
@@ -233,7 +239,7 @@ namespace Script
             }
 
             string[] linesSplit = new string[lines.Count];
-            for (int i = 0; i < 11; i++)
+            for (int i = 0; i < 12; i++)
             {
                 linesSplit[i] = lines[i].Split('\t')[1];
             }
@@ -241,37 +247,44 @@ namespace Script
             DISTBETWCRYST = Int32.Parse(linesSplit[1]);
             ALLOWEDH = Int32.Parse(linesSplit[2]);
             ALLOWEDW = Int32.Parse(linesSplit[3]);
-            HBORDER2 = Int32.Parse(linesSplit[4]);
-            WBORDER1 = Int32.Parse(linesSplit[5]);
-            WBORDER2 = Int32.Parse(linesSplit[6]);
-            H1 = Int32.Parse(linesSplit[7]);
-            H2 = Int32.Parse(linesSplit[8]);
-            DX1 = Int32.Parse(linesSplit[9]);
-            DX2 = Int32.Parse(linesSplit[10]);
-            HBORDER1 = -H1 - ALLOWEDH - H2;
-            WIDTHOFCRYST = 2 * DX1 + 3 * DX2;
+            HBORDER1 = Int32.Parse(linesSplit[4]);
+            HBORDER2 = Int32.Parse(linesSplit[5]);
+            WBORDER1 = Int32.Parse(linesSplit[6]);
+            WBORDER2 = Int32.Parse(linesSplit[7]);
+            H1 = Int32.Parse(linesSplit[8]);
+            H2 = Int32.Parse(linesSplit[9]);
+            DX1 = Int32.Parse(linesSplit[10]);
+            DX2 = Int32.Parse(linesSplit[11]);
+            WIDTHOFCRYST = 2 * DX1 + 2 * DX2;
         }
 
         static void ReadCoordinateFile(string path)
         {
-            int i = 0;
+            int i = 0, numOfRow = 0;
+            int currentX = 0;
             string[] linesSplit;
             string[] jumpers;
             int jumperNumber;
+            CrystCoord tempCrystCoord = new CrystCoord();
+            BorderCryst tempBorderCryst;
 
             foreach (string line in ReadAllLinesFromFile(path))
             {
-                CrystCoord temp = new CrystCoord();
                 linesSplit = line.Split('\t');
                 jumpers = linesSplit[2].Split('F');
-                temp.x = Int32.Parse(linesSplit[0]);
-                temp.y = Int32.Parse(linesSplit[1]);
+                tempCrystCoord.x = Int32.Parse(linesSplit[0]);
+                tempCrystCoord.y = Int32.Parse(linesSplit[1]);
+                if(currentX != tempCrystCoord.x)
+                {
+                    tempBorderCryst
+                }
+                currentX = tempCrystCoord.x;
 
                 if (jumpers[0] == "-")
                 {
-                    temp.f1 = false;
-                    temp.f2 = false;
-                    temp.f3 = false;
+                    tempCrystCoord.f1 = false;
+                    tempCrystCoord.f2 = false;
+                    tempCrystCoord.f3 = false;
                 }
                 else
                 {
@@ -279,9 +292,9 @@ namespace Script
                     {
                         case 1:
                             {
-                                temp.f1 = false;
-                                temp.f2 = false;
-                                temp.f3 = false;
+                                tempCrystCoord.f1 = false;
+                                tempCrystCoord.f2 = false;
+                                tempCrystCoord.f3 = false;
                                 break;
                             }
                         case 2:
@@ -292,33 +305,33 @@ namespace Script
                                     {
                                         case 1:
                                             {
-                                                temp.f1 = true;
+                                                tempCrystCoord.f1 = true;
                                                 break;
                                             }
                                         case 2:
                                             {
-                                                temp.f2 = true;
+                                                tempCrystCoord.f2 = true;
                                                 break;
                                             }
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f1 = false;
-                                                temp.f2 = false;
-                                                temp.f3 = false;
+                                                tempCrystCoord.f1 = false;
+                                                tempCrystCoord.f2 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f1 = false;
-                                    temp.f2 = false;
-                                    temp.f3 = false;
+                                    tempCrystCoord.f1 = false;
+                                    tempCrystCoord.f2 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
                                 break;
                             }
@@ -330,33 +343,33 @@ namespace Script
                                     {
                                         case 1:
                                             {
-                                                temp.f1 = true;
+                                                tempCrystCoord.f1 = true;
                                                 break;
                                             }
                                         case 2:
                                             {
-                                                temp.f2 = true;
+                                                tempCrystCoord.f2 = true;
                                                 break;
                                             }
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f1 = false;
-                                                temp.f2 = false;
-                                                temp.f3 = false;
+                                                tempCrystCoord.f1 = false;
+                                                tempCrystCoord.f2 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f1 = false;
-                                    temp.f2 = false;
-                                    temp.f3 = false;
+                                    tempCrystCoord.f1 = false;
+                                    tempCrystCoord.f2 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
 
                                 if (Int32.TryParse(jumpers[2], out jumperNumber))
@@ -365,26 +378,26 @@ namespace Script
                                     {
                                         case 2:
                                             {
-                                                temp.f2 = true;
+                                                tempCrystCoord.f2 = true;
                                                 break;
                                             }
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f2 = false;
-                                                temp.f3 = false;
+                                                tempCrystCoord.f2 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f2 = false;
-                                    temp.f3 = false;
+                                    tempCrystCoord.f2 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
                                 break;
                             }
@@ -396,33 +409,33 @@ namespace Script
                                     {
                                         case 1:
                                             {
-                                                temp.f1 = true;
+                                                tempCrystCoord.f1 = true;
                                                 break;
                                             }
                                         case 2:
                                             {
-                                                temp.f2 = true;
+                                                tempCrystCoord.f2 = true;
                                                 break;
                                             }
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f1 = false;
-                                                temp.f2 = false;
-                                                temp.f3 = false;
+                                                tempCrystCoord.f1 = false;
+                                                tempCrystCoord.f2 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f1 = false;
-                                    temp.f2 = false;
-                                    temp.f3 = false;
+                                    tempCrystCoord.f1 = false;
+                                    tempCrystCoord.f2 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
 
                                 if (Int32.TryParse(jumpers[2], out jumperNumber))
@@ -431,26 +444,26 @@ namespace Script
                                     {
                                         case 2:
                                             {
-                                                temp.f2 = true;
+                                                tempCrystCoord.f2 = true;
                                                 break;
                                             }
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f2 = false;
-                                                temp.f3 = false;
+                                                tempCrystCoord.f2 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f2 = false;
-                                    temp.f3 = false;
+                                    tempCrystCoord.f2 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
 
                                 if (Int32.TryParse(jumpers[3], out jumperNumber))
@@ -459,25 +472,25 @@ namespace Script
                                     {
                                         case 3:
                                             {
-                                                temp.f3 = true;
+                                                tempCrystCoord.f3 = true;
                                                 break;
                                             }
                                         default:
                                             {
-                                                temp.f3 = false;
+                                                tempCrystCoord.f3 = false;
                                                 break;
                                             }
                                     }
                                 }
                                 else
                                 {
-                                    temp.f3 = false;
+                                    tempCrystCoord.f3 = false;
                                 }
                                 break;
                             }
                     }
                 }
-                crystCoords.Add(temp);
+                crystCoords.Add(tempCrystCoord);
                 i++;
             }
             //crystCoords.Reverse();
