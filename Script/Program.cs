@@ -26,8 +26,8 @@ namespace Script
             string path1 = args[0];
             string path2 = args[1];
 
-            ReadCoordinateFile(path1);
             ReadCrystParameters(path2);
+            ReadCoordinateFile(path1);
 
             for (int k = 0; k < NUMOFCOLS; k++)
             {
@@ -67,6 +67,16 @@ namespace Script
             public bool f1;
             public bool f2;
             public bool f3;
+
+            public CrystCoord()
+            {
+                x = 0;
+                y = 0;
+                f1 = false;
+                f2 = false;
+                f3 = false;
+            }
+
             /*
             public int X
             {
@@ -127,13 +137,19 @@ namespace Script
 
         public class BorderCryst
         {
-            int topCryst { get; set; }
-            int downCryst { get; set; }
+            public int xBorder { get; set; }
+            public int yBorder { get; set; }
+
+            public BorderCryst()
+            {
+                xBorder = 0;
+                yBorder = 0;
+            }
         }
 
         public static List<CrystCoord> crystCoords = new List<CrystCoord>();
 
-        public static List<BorderCryst> borderCryst = new List<BorderCryst>();
+        public static List<BorderCryst> borderCrysts = new List<BorderCryst>();
 
         enum Direction
         {
@@ -265,21 +281,40 @@ namespace Script
             string[] linesSplit;
             string[] jumpers;
             int jumperNumber;
-            CrystCoord tempCrystCoord = new CrystCoord();
-            BorderCryst tempBorderCryst;
 
             foreach (string line in ReadAllLinesFromFile(path))
             {
                 linesSplit = line.Split('\t');
                 jumpers = linesSplit[2].Split('F');
+                CrystCoord tempCrystCoord = new CrystCoord();
+                BorderCryst tempBorderCryst = new BorderCryst();
                 tempCrystCoord.x = Int32.Parse(linesSplit[0]);
                 tempCrystCoord.y = Int32.Parse(linesSplit[1]);
-                if(currentX != tempCrystCoord.x)
-                {
-                    tempBorderCryst
-                }
-                currentX = tempCrystCoord.x;
 
+                if(i == 0)
+                {
+                    tempBorderCryst.xBorder = tempCrystCoord.x;
+                    tempBorderCryst.yBorder = tempCrystCoord.y;
+                    borderCrysts.Add(tempBorderCryst);
+                }
+
+                if(numOfRow == 0)
+                {
+                    if (currentX != tempCrystCoord.x)
+                    {
+                        tempBorderCryst.xBorder = crystCoords[i - 1].x;
+                        tempBorderCryst.yBorder = crystCoords[i - 1].y;
+                        borderCrysts.Add(tempBorderCryst);
+                    }
+                }
+
+                if (currentX != tempCrystCoord.x)
+                {
+                    numOfRow++;
+                }
+
+                currentX = tempCrystCoord.x;
+                
                 if (jumpers[0] == "-")
                 {
                     tempCrystCoord.f1 = false;
@@ -490,11 +525,69 @@ namespace Script
                             }
                     }
                 }
+
+                if(numOfRow == NUMOFCOLS - 1)
+                {
+                    if (tempBorderCryst.xBorder == borderCrysts[0].xBorder && borderCrysts.Count == 2)
+                    {
+                        tempBorderCryst.xBorder = crystCoords[i - 1].x;
+                        tempBorderCryst.yBorder = crystCoords[i - 1].y;
+                        borderCrysts.Add(tempBorderCryst);
+                    }
+                    if(tempBorderCryst.yBorder == borderCrysts[1].yBorder && borderCrysts.Count == 3)
+                    {
+                        tempBorderCryst.xBorder = crystCoords[i - 1].x;
+                        tempBorderCryst.yBorder = crystCoords[i - 1].y;
+                        borderCrysts.Add(tempBorderCryst);
+                    }
+                }
+
                 crystCoords.Add(tempCrystCoord);
                 i++;
             }
             //crystCoords.Reverse();
         }
+
+        static CrystCoord JumperSearch(int currentCryst, Direction direction, bool firstPassage)
+        {
+            CrystCoord tempCrystCoord;
+            int tempCurrentCryst = currentCryst;
+            switch(direction)
+            {
+                case Direction.TOP:
+                {
+                        tempCrystCoord = crystCoords[tempCurrentCryst];
+                        if(firstPassage == true)
+                        {
+                            while (tempCrystCoord.y != borderCrysts[1].yBorder || tempCrystCoord.f1 != true)
+                            {
+                                tempCurrentCryst++;
+                                tempCrystCoord = crystCoords[tempCurrentCryst];
+                            }
+                        }
+                        else
+                        {
+                            while (tempCrystCoord.y != borderCrysts[1].yBorder || tempCrystCoord.f3 != true)
+                            {
+                                tempCurrentCryst++;
+                                tempCrystCoord = crystCoords[tempCurrentCryst];
+                            }
+                        }
+                        return tempCrystCoord;
+                        }
+                case Direction.DOWN:
+                {
+                        tempCrystCoord = crystCoords[tempCurrentCryst];
+                        while (tempCrystCoord.y != borderCrysts[0].yBorder || tempCrystCoord.f2 != true)
+                        {
+                            tempCurrentCryst++;
+                            tempCrystCoord = crystCoords[tempCurrentCryst];
+                        }
+                        return tempCrystCoord;
+                }
+                return tempCrystCoord;
+                }
+            }
 
         static void ColumnProcessing(string path)
         {
@@ -581,6 +674,7 @@ namespace Script
                     break;
             }*/
 
+            direction = Direction.TOP;
             firstPassage = true;
             while (countRows != 3)
             {
@@ -694,6 +788,5 @@ namespace Script
             if (dateTime2.Subtract(dateTime1).TotalSeconds > 10)
                 Autofocus();
         }
-
     }
 }
