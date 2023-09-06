@@ -552,6 +552,7 @@ namespace Script
         {
             CrystCoord tempCrystCoord;
             int tempCurrentCryst = currentCryst;
+            tempCrystCoord = crystCoords[tempCurrentCryst];
             switch(direction)
             {
                 case Direction.TOP:
@@ -574,7 +575,7 @@ namespace Script
                             }
                         }
                         return tempCrystCoord;
-                        }
+                }
                 case Direction.DOWN:
                 {
                         tempCrystCoord = crystCoords[tempCurrentCryst];
@@ -585,9 +586,9 @@ namespace Script
                         }
                         return tempCrystCoord;
                 }
-                return tempCrystCoord;
-                }
             }
+            return tempCrystCoord;
+        }
 
         static void ColumnProcessing(string path)
         {
@@ -595,6 +596,7 @@ namespace Script
             bool firstPassage = false;
             //int typeOfJumpers;
             Direction direction = Direction.TOP;
+            int k = 0;
             int countRows = 0;
             int currentCryst = countCryst;
 
@@ -688,28 +690,64 @@ namespace Script
                                     countCryst++;
                                 currentCryst++;
                                 crystCoord = crystCoords[currentCryst - 1];
+                                k = currentCryst - 1;
+
                                 switch (countRows)
                                 {
                                     case 0:
                                         {
                                             if (crystCoord.f1)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f1 && crystCoords[k].y != borderCrysts[1].yBorder)
+                                                {
+                                                    k++;
+                                                }
+                                            }
                                             break;
                                         }
                                     case 1:
                                         {
                                             if (crystCoord.f2)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f2 && crystCoords[k].y != borderCrysts[1].yBorder)
+                                                {
+                                                    k++;
+                                                }
+                                            }
                                             break;
                                         }
                                     case 2:
                                         {
                                             if (crystCoord.f3)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f3 && crystCoords[k].y != borderCrysts[1].yBorder)
+                                                {
+                                                    k++;
+                                                }
+                                            }
                                             break;
                                         }
                                 }
-                                FromDownToTop(x, ref y, laserNecessary);
+                                if (laserNecessary)
+                                    FromDownToTop(x, ref y, laserNecessary);
+                                else
+                                {
+                                    y = crystCoords[k].y - H2 - ALLOWEDH;
+                                    GoTo(x, y);
+                                    LaserOn();
+                                    GoTo(x, y + ALLOWEDH);
+                                    y += ALLOWEDH;
+                                    LaserOff();
+                                    GoTo(x, y + H2);
+                                    y += H2;
+                                    currentCryst = k++;
+                                }
                                 laserNecessary = false;
                                 //y += H1 + ALLOWEDH + H2;
                                 if (y != HBORDER2)
@@ -738,6 +776,7 @@ namespace Script
                             while (y != HBORDER1)
                             {
                                 crystCoord = crystCoords[currentCryst - 1];
+                                k = currentCryst - 1;
                                 currentCryst--;
                                 //x = crystCoord.x;
                                 //y = crystCoord.y;
@@ -747,22 +786,56 @@ namespace Script
                                         {
                                             if (crystCoord.f1)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f1 && crystCoords[k].y != borderCrysts[0].yBorder)
+                                                {
+                                                    k--;
+                                                }
+                                            }
                                             break;
                                         }
                                     case 1:
                                         {
                                             if (crystCoord.f2)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f2 && crystCoords[k].y != borderCrysts[0].yBorder)
+                                                {
+                                                    k--;
+                                                }
+                                            }
                                             break;
                                         }
                                     case 2:
                                         {
                                             if (crystCoord.f3)
                                                 laserNecessary = true;
+                                            else 
+                                            {
+                                                while(!crystCoords[k].f3 && crystCoords[k].y != borderCrysts[0].yBorder)
+                                                {
+                                                    k--;
+                                                }
+                                            }
                                             break;
                                         }
                                 }
-                                FromTopToDown(x, ref y, laserNecessary);
+                                if(!laserNecessary)
+                                    FromTopToDown(x, ref y, laserNecessary);
+                                else
+                                {
+                                    y = crystCoords[k].y - H2;
+                                    GoTo(x, y);
+                                    LaserOn();
+                                    GoTo(x, y - ALLOWEDH);
+                                    y -= ALLOWEDH;
+                                    LaserOff();
+                                    GoTo(x, y - H1);
+                                    y -= H1;
+                                    currentCryst = k--;
+                                }
                                 //y -= H1 + ALLOWEDH + H2;
                                 laserNecessary = false;
                                 if (y != HBORDER1)
