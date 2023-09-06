@@ -47,9 +47,11 @@ namespace Script
 
         //Crystal Parameters:
         public static int NUMOFCOLS;
-        public static int DISTBETWCRYST;
+        public static int HDISTBETWCRYST;
+        public static int WDISTBETWCRYST;
         public static int ALLOWEDH;
         public static int ALLOWEDW;
+        public static int HBORDER1;
         public static int HBORDER2;
         public static int WBORDER1;
         public static int WBORDER2;
@@ -57,73 +59,16 @@ namespace Script
         public static int H2;
         public static int DX1;
         public static int DX2;
-        public static int HBORDER1;
         public static int WIDTHOFCRYST;
 
         //structure (class) for keeping crystal's properties:
-        public class CrystCoord
+        public struct CrystCoord
         {
             public int x;
             public int y;
             public bool f1;
             public bool f2;
             public bool f3;
-            /*
-            public int X
-            {
-                get
-                    {
-                    return x;
-                    }
-                set
-                    {
-                    x = value;
-                    }
-            }
-            public int Y
-            {
-                get
-                    {
-                    return y;
-                    }
-                set
-                    {
-                    y = value;
-                    }
-            }
-            public bool F1
-            {
-                get
-                    {
-                    return f1;
-                    }
-                set
-                    {
-                    f1 = value;
-                    }
-            }
-            public bool F2
-            {
-                get
-                    {
-                    return f2;
-                    }
-                set
-                    {
-                    f2 = value;
-                    }
-            }
-            public bool F3
-            {
-                get
-                    {
-                    return f3;
-                    }
-                set
-                    {
-                    f3 = value;
-                    }
-            }*/
         }
 
 
@@ -151,38 +96,38 @@ namespace Script
         {
             if (laserNecessary == true)
             {
-                GoTo(x, y - H2);
-                y -= H2;
+                GoTo(x, y + H2);
+                y += H2;
                 LaserOn();
-                GoTo(x, y - ALLOWEDH);
-                y -= ALLOWEDH;
+                GoTo(x, y + ALLOWEDH);
+                y += ALLOWEDH;
                 LaserOff();
-                GoTo(x, y - H1);
-                y -= H1;
+                GoTo(x, y + H1);
+                y += H1;
             }
             else
             {
-                GoTo(x, y - H2 - ALLOWEDH - H1);
-                y -= H2 + ALLOWEDH + H1;
+                GoTo(x, y + H2 + ALLOWEDH + H1);
+                y += H2 + ALLOWEDH + H1;
             }
         }
         static void FromDownToTop(int x, ref int y, bool laserNecessary)
         {
             if (laserNecessary == true)
             {
-                GoTo(x, y + H1);
-                y += H1;
+                GoTo(x, y - H1);
+                y -= H1;
                 LaserOn();
-                GoTo(x, y + ALLOWEDH);
-                y += ALLOWEDH;
+                GoTo(x, y - ALLOWEDH);
+                y -= ALLOWEDH;
                 LaserOff();
-                GoTo(x, y + H2);
-                y += H2;
+                GoTo(x, y - H2);
+                y -= H2;
             }
             else
             {
                 GoTo(x, y + H1 + ALLOWEDH + H2);
-                y += H1 + ALLOWEDH + H2;
+                y -= H1 + ALLOWEDH + H2;
             }
         }
         static void Autofocus()
@@ -194,18 +139,6 @@ namespace Script
         {
             Console.WriteLine($"Delay {timeInSec} s");
         }
-
-        //public (int, int, bool, bool, bool) CrystCoord;
-        /*
-        public struct CrystCoord
-        {
-            public int x;
-            public int y;
-            public bool f1;
-            public bool f2;
-            public bool f3;
-        };*/
-
 
         static IEnumerable<string> ReadAllLinesFromFile(string path)
         {
@@ -224,32 +157,31 @@ namespace Script
         static void SetCrystParameters(string path)
         {
             List<string> lines = new List<string>();
-            int k = 0;
 
             foreach (string line in ReadAllLinesFromFile(path))
             {
                 lines.Add(line);
-                k++;
             }
 
             string[] linesSplit = new string[lines.Count];
-            for (int i = 0; i < 11; i++)
+            for (int i = 0; i < 14; i++)
             {
                 linesSplit[i] = lines[i].Split('\t')[1];
             }
             NUMOFCOLS = Int32.Parse(linesSplit[0]);
-            DISTBETWCRYST = Int32.Parse(linesSplit[1]);
-            ALLOWEDH = Int32.Parse(linesSplit[2]);
-            ALLOWEDW = Int32.Parse(linesSplit[3]);
-            HBORDER2 = Int32.Parse(linesSplit[4]);
-            WBORDER1 = Int32.Parse(linesSplit[5]);
-            WBORDER2 = Int32.Parse(linesSplit[6]);
-            H1 = Int32.Parse(linesSplit[7]);
-            H2 = Int32.Parse(linesSplit[8]);
-            DX1 = Int32.Parse(linesSplit[9]);
-            DX2 = Int32.Parse(linesSplit[10]);
-            HBORDER1 = -H1 - ALLOWEDH - H2;
-            WIDTHOFCRYST = 2 * DX1 + 3 * DX2;
+            HDISTBETWCRYST = Int32.Parse(linesSplit[1]);
+            WDISTBETWCRYST = Int32.Parse(linesSplit[2]);
+            ALLOWEDH = Int32.Parse(linesSplit[3]);
+            ALLOWEDW = Int32.Parse(linesSplit[4]);
+            HBORDER1 = Int32.Parse(linesSplit[5]);
+            HBORDER2 = Int32.Parse(linesSplit[6]);
+            WBORDER1 = Int32.Parse(linesSplit[7]);
+            WBORDER2 = Int32.Parse(linesSplit[8]);
+            H1 = Int32.Parse(linesSplit[9]);
+            H2 = Int32.Parse(linesSplit[10]);
+            DX1 = Int32.Parse(linesSplit[11]);
+            DX2 = Int32.Parse(linesSplit[12]);
+            WIDTHOFCRYST = Int32.Parse(linesSplit[13]);
         }
 
         static void ReadCoordinateFile(string path)
@@ -487,7 +419,6 @@ namespace Script
         {
             bool laserNecessary = false;
             bool firstPassage = false;
-            //int typeOfJumpers;
             Direction direction = Direction.TOP;
             int countRows = 0;
             int currentCryst = countCryst;
@@ -500,73 +431,11 @@ namespace Script
             Delay(0.3);
             DateTime dateTime1 = DateTime.Now;
             //going to the start position
-            GoTo(x, y - H1 - ALLOWEDH - H2);
-            y -= H1 + ALLOWEDH + H2;
+            GoTo(x, y + H1 + ALLOWEDH + H2);
+            y += H1 + ALLOWEDH + H2;
             GoTo(x + DX1, y);
             x += DX1;
             direction = Direction.TOP;
-            //typeOfJumpers = ReadJumpers();
-            /*switch (typeOfJumpers)
-            {
-                case 0:
-                    {
-                        dx1 = 76;
-                        dy1 = 10;
-                        dx2 = 115;
-                        dy2 = -10;
-                        break;
-                    }
-                case 1:
-                    {
-                        dx1 = 76;
-                        dy1 = 10;
-                        dx2 = 230;
-                        dy2 = -10;
-                        break;
-                    }
-                case 2:
-                    {
-                        dx1 = 115;
-                        dy1 = 10;
-                        dx2 = 115;
-                        dy2 = -10;
-                        break;
-                    }
-                case 3:
-                    {
-                        dx1 = 76;
-                        dy1 = 0;
-                        dx2 = 0;
-                        dy2 = 0;
-                        break;
-                    }
-                case 4:
-                    {
-                        dx1 = 0;
-                        dy1 = 0;
-                        dx2 = 115;
-                        dy2 = 0;
-                        break;
-                    }
-                case 5:
-                    {
-                        dx1 = 0;
-                        dy1 = 0;
-                        dx2 = 115;
-                        dy2 = 0;
-                        break;
-                    }
-                case 6:
-                    {
-                        dx1 = 76;
-                        dy1 = 0;
-                        dx2 = 0;
-                        dy2 = 0;
-                        break;
-                    }
-                default:
-                    break;
-            }*/
 
             firstPassage = true;
             while (countRows != 3)
@@ -604,11 +473,10 @@ namespace Script
                                 }
                                 FromDownToTop(x, ref y, laserNecessary);
                                 laserNecessary = false;
-                                //y += H1 + ALLOWEDH + H2;
                                 if (y != HBORDER2)
                                 {
-                                    GoTo(x, y + DISTBETWCRYST);
-                                    y += DISTBETWCRYST;
+                                    GoTo(x, y - HDISTBETWCRYST);
+                                    y -= HDISTBETWCRYST;
                                 }
                                 else
                                 {
@@ -632,8 +500,6 @@ namespace Script
                             {
                                 crystCoord = crystCoords[currentCryst - 1];
                                 currentCryst--;
-                                //x = crystCoord.x;
-                                //y = crystCoord.y;
                                 switch (countRows)
                                 {
                                     case 0:
@@ -656,12 +522,11 @@ namespace Script
                                         }
                                 }
                                 FromTopToDown(x, ref y, laserNecessary);
-                                //y -= H1 + ALLOWEDH + H2;
                                 laserNecessary = false;
                                 if (y != HBORDER1)
                                 {
-                                    GoTo(x, y - DISTBETWCRYST);
-                                    y -= DISTBETWCRYST;
+                                    GoTo(x, y + HDISTBETWCRYST);
+                                    y += HDISTBETWCRYST;
                                 }
                                 else
                                 {
@@ -677,7 +542,6 @@ namespace Script
                 }
             }
             DateTime dateTime2 = DateTime.Now;
-            //Console.WriteLine(dateTime2);
             if (dateTime2.Subtract(dateTime1).TotalSeconds > 10)
                 Autofocus();
         }
